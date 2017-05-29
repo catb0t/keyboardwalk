@@ -1,22 +1,59 @@
 #!/usr/bin/env python3
 
-import pprint
-
 
 class Matrix_2D:
+    '''
+        Arguments:  mat (a 2d iterable), x (an int) and y (an int)
+        Returns:    None
+        Throws:     no
+        Effects:    none
 
-    def __init__(self, mat):
+        Create a new Matrix_2D object for manipulating 2D matricies, given a
+            2D iterable.
+
+        If mat is already a Matrix_2D instance, its attributes are copied,
+            losslessly, and the x and y arguments are ignored.
+
+        Otherwise, its elements' elements are converted to tuples, and the
+            top-level elements converted to tuples.
+
+        x and y default to 0 if they are not provided.
+    '''
+
+    def __init__(self, mat, x = 0, y = 0):
         if type(mat) == type(self):
             self.mat = mat.mat
             self.x = mat.x
             self.y = mat.y
         else:
             self.mat = mat_rpad(tuple(tuple(i) for i in mat))
-        self.x = 0
-        self.y = 0
+        self.x = x
+        self.y = y
 
     def __getitem__(self, key):
-        '''if the key is found, return its index, else try to index'''
+        '''
+            Arguments:  key (an object)
+            Returns:    key's index in self (if it was found), or the
+                currently-indexed element of self.mat with self.x and self.y
+                (if key was any int, like self[0] or self[234]), or key's slice
+                attributes (if key was a slice, self[1:2] -> .mat[2][1])
+            Throws:     IndexError if key isn't found as an element and not an
+                        instance of int or slice
+            Effects:    no
+
+            If the key is found as an element, return its index as (x, y).
+
+            Else, and if the key is an int, return .mat[.y][.x].
+
+            Else, and if the key is a slice instance, return the element given
+                by indexing .mat using slice attributes as .y and .x.
+
+            Note that accesses to .mat with x, y are swapped because of the
+                order of indexing.
+
+            That is, .mat[y][x] is what you meant when you said self[x:y],
+                since we are taught to list x before y in math class.
+        '''
         for idx, elt in enumerate(self.mat):
             try:
                 x = elt.index(key)
@@ -62,7 +99,7 @@ class Matrix_2D:
 
     def __imod__(self, rhs):
         '''changes the matrix itself'''
-        self.mat = tuple(tuple(i) for i in rhs)
+        self.mat = mat_rpad(tuple(tuple(i) for i in rhs))
         return self
 
     def __pos__(self):
@@ -102,6 +139,7 @@ class Matrix_2D:
         self.mat = mat_rpad(self.mat)
 
     def __repr__(self):
+        import pprint
         return "{} {} {}\n{}".format(
             self.x, self.y, self[0],
             pprint.pformat(self.mat, indent=4, width=50)
@@ -191,12 +229,7 @@ def mat_rpad(mat, padwith=None):
 
 
 def main():
-    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  #
-    # input("kbd: ").split(" ")
-    wlk = input("walk: ")  # "wsdcvb"
-    print(walk(kbd, wlk))
-    return
-
+    '''
     kbd_mat = Matrix_2D(kbd)
     pprint.pprint(kbd_mat)
     kbd_mat += (2, 1)
@@ -206,6 +239,12 @@ def main():
     kbd_mat %= reversed(kbd_mat)
     pprint.pprint(kbd_mat)
     print(kbd_mat["a"])
+    '''
+    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  #
+    # input("kbd: ").split(" ")
+    wlk = input("walk: ")  # "wsdcvb"
+    print(walk(kbd, wlk))
+    return
 
 
 if __name__ == '__main__':
