@@ -5,12 +5,19 @@ import pprint
 
 class Matrix_2D:
 
-    def __init__(self, mat ):
-        self.mat = tuple(tuple(i) for i in mat)
+    def __init__(self, mat):
+        if type(mat) == type(self):
+            self.mat = mat.mat
+            self.x = mat.x
+            self.y = mat.y
+        else:
+
+            self.mat = mat_rpad(tuple(tuple(i) for i in mat))
         self.x = 0
         self.y = 0
 
     def __getitem__(self, key):
+        '''if the key is found, return its index, else try to index'''
         for idx, elt in enumerate(self.mat):
             try:
                 x = elt.index(key)
@@ -21,37 +28,53 @@ class Matrix_2D:
 
         if isinstance(key, int):
             return self.mat[self.y][self.x]
-            raise ValueError("expected slice (got int)")
         if isinstance(key, slice):
             return self.mat[key.stop][key.start]
 
+        raise TypeError("failed to getitem with key {} of type {}"
+                        .format(key, type(key)))
+
     def __iadd__(self, rhs):
+        '''changes .x if int, or both if list'''
         if isinstance(rhs, int):
             self.x_chg(rhs)
-            return self
-        if any(isinstance(rhs, c) for c in (tuple, list)):
+
+        elif type(rhs) in (tuple, list, Twople):
             self.x_chg(rhs[0])
             self.y_chg(rhs[1])
-            return self
+        return self
 
     def __imul__(self, rhs):
+        '''changes .y if int, or both if list'''
         if isinstance(rhs, int):
             self.y_chg(rhs)
-            return self
-        if any(isinstance(rhs, c) for c in (tuple, list)):
+
+        elif type(rhs) in (tuple, list, Twople):
             self.x_chg(rhs[0])
             self.y_chg(rhs[1])
-            return self
+        return self
 
     def __itruediv__(self, rhs):
-        if any(isinstance(rhs, c) for c in (tuple, list)):
+        '''sets the .x and .y'''
+        if type(rhs) in (tuple, list, Twople):
             self.x = rhs[0]
             self.y = rhs[1]
-            return self
+        return self
 
     def __imod__(self, rhs):
+        '''changes the matrix itself'''
         self.mat = tuple(tuple(i) for i in rhs)
         return self
+
+    def __pos__(self):
+        '''returns max for y'''
+        return len(self.mat)
+
+    def __invert__(self):
+        '''returns max for x'''
+        if not len(self.mat):
+            return 0
+        return len(self.mat[0])
 
     def x_chg(self, n):
         self.x = self._chgx(n)
@@ -62,13 +85,13 @@ class Matrix_2D:
     def _chgx(self, n):
         v = self.x + n
         if v < 0: return 0
-        if v > len(self.mat[self.y]): return len(self.mat[self.y])
+        if v > len(self.mat[self.y]) - 1: return len(self.mat[self.y]) - 1
         return v
 
     def _chgy(self, n):
         v = self.y + n
         if v < 0: return 0
-        if v > len(self.mat): return len(self.mat)
+        if v > len(self.mat) - 1: return len(self.mat) - 1
         return v
 
     def __repr__(self):
@@ -86,43 +109,83 @@ class Twople(tuple):
         return Twople(sorted(self))
 
 
-def walk_rec(kb, wk, dbg=False):  # , _last=None):
+def walk_rec(kbd, wlk, dbg=False):  # , _last=None):
     '''
         Use recursion to determine whether a string is a walk of a keyboard.
     '''
-    lw = len(wk)
+    lw = len(wlk)
     if lw < 2: return True
     if lw % 2:
-        if not walk_rec(kb, wk[-2:], dbg=dbg):
+        if not walk_rec(kbd, wlk[-2:], dbg=dbg):
             return False
 
-    m = Matrix_2D(kb)
-    first, second = wk[:2]
-    fi, si = m[first], m[second]
+    kbd_mat = Matrix_2D(kbd)
+    first, second = wlk[:2]
+    fi, si = kbd_mat[first], kbd_mat[second]
     diff   = Twople( map( abs, fi - si ) ).sort()
     valid  = tuple(diff) in ( (0, 0), (0, 1), (1, 1) )
 
     if dbg: print(first, fi, second, si, diff, valid)
 
-    if valid: return walk_rec(kb, wk[2:], dbg=dbg)
+    if valid: return walk_rec(kbd, wlk[2:], dbg=dbg)
 
     return False
 
 
+def walk(kbd, wlk):
+    return walk_rec(kbd, wlk, dbg=False)
+
+
+def gen_rand_walk(kbd, wlk_len):
+    from random import randrange, seed, choice
+    from time import time
+
+    seed(time() * 100)
+    wlk            = []
+    kbd_mat        = Matrix_2D(kbd)
+    while kbd_mat[0] != " ":
+        startx, starty = randrange(~kbd_mat), randrange(+kbd_mat)
+        kbd_mat /= (startx, starty)
+
+    from itertools import permutations
+    dirs     = tuple(permutations((0, 1, -1), 2))
+
+    for c in range(wlk_len):
+        td = choice(dirs)  # or dirs[c % (len(dirs) - 1) ]
+        kbd_mat += td
+        wlk     += kbd_mat[0]
+
+    return wlk
+
+
+def mat_rpad(mat, padwith=None):
+    maxlen = max(map(len, mat))
+
+    if padwith is None:
+        padwith = " " if type(mat[0][0]) == str else 0
+    for idx, elt in enumerate(mat):
+        diff = maxlen - len(elt)
+        if diff:
+            mat[idx] += [padwith] * diff
+    return mat
+
+
 def main():
-    kb = ["qwerty", "asdfgh", " zxcvbn"]  # input("kb: ").split(" ")
-    wk = "wsdcvb"
-    print(walk_rec(kb, wk))
+    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  # input("kbd: ").split(" ")
+    # wlk = "wsdcvb"
+    wl  = 4
+    print(gen_rand_walk(kbd, wl))
     return
-    m = Matrix_2D(kb)
-    pprint.pprint(m)
-    m += (2, 1)
-    m *= -1
-    pprint.pprint(m)
-    m /= (1, 1)
-    m %= reversed(kb)
-    pprint.pprint(m)
-    print(m["a"])
+
+    kbd_mat = Matrix_2D(kbd)
+    pprint.pprint(kbd_mat)
+    kbd_mat += (2, 1)
+    kbd_mat *= -1
+    pprint.pprint(kbd_mat)
+    kbd_mat /= (1, 1)
+    kbd_mat %= reversed(kbd_mat)
+    pprint.pprint(kbd_mat)
+    print(kbd_mat["a"])
 
 
 if __name__ == '__main__':
