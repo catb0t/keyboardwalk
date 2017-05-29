@@ -75,6 +75,9 @@ class Matrix_2D:
             return 0
         return len(self.mat[0])
 
+    def __neg__(self):
+        return ~self
+
     def x_chg(self, n):
         self.x = self._chgx(n)
         return self.x
@@ -107,7 +110,13 @@ class Matrix_2D:
 
 class Twople(tuple):
     def __sub__(self, rhs):
-        return (self[0] - rhs[0], self[1] - rhs[1])
+        return Twople( (self[0] - rhs[0], self[1] - rhs[1]) )
+
+    def __or__(self, rhs):
+        return self[0] | self[1] | rhs
+
+    def __abs__(self):
+        return Twople(map(abs, self))
 
     def sort(self):
         return Twople(sorted(self))
@@ -125,10 +134,12 @@ def walk_rec(kbd, wlk, dbg=False):
 
     kbd_mat = Matrix_2D(kbd)
     first, second = wlk[:2]
-    try:               fi, si = kbd_mat[first], kbd_mat[second]
-    except IndexError: return False
-    diff   = Twople( map( abs, fi - si ) ).sort()
-    valid  = tuple(diff) in ( (0, 0), (0, 1), (1, 1) )
+    try:
+        fi, si = kbd_mat[first], kbd_mat[second]
+    except IndexError:
+        return False
+    diff   = abs(fi - si).sort()
+    valid  = 1 == (diff | 1)  # diff in ( (0, 0), (0, 1), (1, 1) )
 
     if dbg: print(first, fi, second, si, diff, valid)
 
@@ -146,17 +157,17 @@ def gen_rand_walk(kbd, wlk_len):
     from time import time
 
     seed(time() * 100)
-    wlk            = []
-    kbd_mat        = Matrix_2D(kbd)
+    wlk     = []
+    kbd_mat = Matrix_2D(kbd)
     while kbd_mat[0] not in (" ", 0, type( kbd[0][0] ) () ):
-        startx, starty = randrange(~kbd_mat), randrange(+kbd_mat)
-        kbd_mat /= (startx, starty)
+        startx, starty  = randrange(~kbd_mat), randrange(+kbd_mat)
+        kbd_mat        /= (startx, starty)
 
     from itertools import permutations
-    dirs     = tuple(permutations((0, 1, -1), 2))
+    dirs = tuple(permutations((0, 1, -1), 2))
 
-    for c in range(wlk_len):
-        td = choice(dirs)  # or dirs[c % (len(dirs) - 1) ]
+    for c in range(wlk_len + 1):
+        td       = choice(dirs)  # or dirs[c % (len(dirs) - 1) ]
         kbd_mat += td
         wlk     += kbd_mat[0]
 
