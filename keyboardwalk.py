@@ -31,8 +31,8 @@ class Matrix_2D:
         if isinstance(key, slice):
             return self.mat[key.stop][key.start]
 
-        raise TypeError("failed to getitem with key {} of type {}"
-                        .format(key, type(key)))
+        raise IndexError("failed to getitem with key {} of type {}"
+                         .format(key, type(key)))
 
     def __iadd__(self, rhs):
         '''changes .x if int, or both if list'''
@@ -121,7 +121,8 @@ def walk_rec(kbd, wlk, dbg=False):  # , _last=None):
 
     kbd_mat = Matrix_2D(kbd)
     first, second = wlk[:2]
-    fi, si = kbd_mat[first], kbd_mat[second]
+    try:               fi, si = kbd_mat[first], kbd_mat[second]
+    except IndexError: return False
     diff   = Twople( map( abs, fi - si ) ).sort()
     valid  = tuple(diff) in ( (0, 0), (0, 1), (1, 1) )
 
@@ -166,15 +167,15 @@ def mat_rpad(mat, padwith=None):
     for idx, elt in enumerate(mat):
         diff = maxlen - len(elt)
         if diff:
-            mat[idx] += [padwith] * diff
+            mat[idx] += type(mat[idx])(padwith) * diff
     return mat
 
 
 def main():
-    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  # input("kbd: ").split(" ")
-    # wlk = "wsdcvb"
-    wl  = 4
-    print(gen_rand_walk(kbd, wl))
+    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  #
+    # input("kbd: ").split(" ")
+    wlk = input("walk: ")  # "wsdcvb"
+    print(walk(kbd, wlk))
     return
 
     kbd_mat = Matrix_2D(kbd)
