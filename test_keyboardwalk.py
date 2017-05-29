@@ -41,6 +41,38 @@ class TestKBW(unittest.TestCase):
         for w in notwalks:
             self.assertFalse(keyboardwalk.walk_rec(kb, w))
 
+    def test_mat_rpad(self):
+        ms = [
+            ("abc", "def", "g"),
+            ("abcde", "gh", "yuip"),
+            ("qwertyuiop", "asdfghjkl", "zxcvb"),
+        ]
+        ams = [
+            ("abc", "def", "g  "),
+            ("abcde", "gh   ", "yuip "),
+            ("qwertyuiop", "asdfghjkl ", "zxcvb     "),
+        ]
+        for i in range(len(ms)):
+            res = tuple(
+                "".join(i)
+                for i in keyboardwalk.mat_rpad(ms[i], padwith=" ")
+            )
+            cmp = ams[i]
+            self.assertEqual(res, cmp)
+
+    def test_gen_rand_walk(self):
+        kb = [
+            "qwertyuiop",
+            "asdfghjkl ",
+            " zxcvbnm  "
+        ]
+        self.assertTrue(
+            map(
+                lambda w: keyboardwalk.walk(kb, w),
+                (keyboardwalk.gen_rand_walk(kb, 50) for i in range(50))
+            )
+        )
+
 
 def suiteFactory(
         *testcases,

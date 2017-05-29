@@ -11,7 +11,6 @@ class Matrix_2D:
             self.x = mat.x
             self.y = mat.y
         else:
-
             self.mat = mat_rpad(tuple(tuple(i) for i in mat))
         self.x = 0
         self.y = 0
@@ -78,9 +77,11 @@ class Matrix_2D:
 
     def x_chg(self, n):
         self.x = self._chgx(n)
+        return self.x
 
     def y_chg(self, n):
         self.y = self._chgy(n)
+        return self.y
 
     def _chgx(self, n):
         v = self.x + n
@@ -93,6 +94,9 @@ class Matrix_2D:
         if v < 0: return 0
         if v > len(self.mat) - 1: return len(self.mat) - 1
         return v
+
+    def repad(self, padwith=None):
+        self.mat = mat_rpad(self.mat)
 
     def __repr__(self):
         return "{} {} {}\n{}".format(
@@ -109,7 +113,7 @@ class Twople(tuple):
         return Twople(sorted(self))
 
 
-def walk_rec(kbd, wlk, dbg=False):  # , _last=None):
+def walk_rec(kbd, wlk, dbg=False):
     '''
         Use recursion to determine whether a string is a walk of a keyboard.
     '''
@@ -144,7 +148,7 @@ def gen_rand_walk(kbd, wlk_len):
     seed(time() * 100)
     wlk            = []
     kbd_mat        = Matrix_2D(kbd)
-    while kbd_mat[0] != " ":
+    while kbd_mat[0] not in (" ", 0, type( kbd[0][0] ) () ):
         startx, starty = randrange(~kbd_mat), randrange(+kbd_mat)
         kbd_mat /= (startx, starty)
 
@@ -163,12 +167,16 @@ def mat_rpad(mat, padwith=None):
     maxlen = max(map(len, mat))
 
     if padwith is None:
-        padwith = " " if type(mat[0][0]) == str else 0
-    for idx, elt in enumerate(mat):
+        padwith = type(mat[0][0]) ()
+
+    copy = list( map( lambda x: list(x).copy(), mat))
+
+    for idx, elt in enumerate(copy):
         diff = maxlen - len(elt)
         if diff:
-            mat[idx] += type(mat[idx])(padwith) * diff
-    return mat
+            copy[idx] += [padwith] * diff
+
+    return tuple(map(tuple, copy))
 
 
 def main():
