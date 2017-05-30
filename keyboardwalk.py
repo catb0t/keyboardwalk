@@ -244,12 +244,11 @@ def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
         idx = mat @ c
         if idx is None: return False
         coords.append(idx + c)
-    print(coords)
     oldcoords  = coords.copy()
     sortcoords = (tuple(sorted(coords, key=lambda x: (x[0], x[1]) )),
                   tuple(sorted(coords, key=lambda x: (x[1], x[0]) )),
                   tuple(coords))
-    accums  = [ list() ] * len(sortcoords)
+    accums  = [ [] for i in range(len(sortcoords)) ]
     for idx, elt in enumerate(sortcoords):
         for jdx, flt in enumerate(elt):
             nxt = flt if (jdx + 1 >= len(elt)) else elt[jdx + 1]

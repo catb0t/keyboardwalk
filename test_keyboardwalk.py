@@ -54,7 +54,7 @@ class TestKBW(unittest.TestCase):
         for w in simple_nonlinear_walks:
             print("doing", w)
             self.assertFalse(keyboardwalk.walk_lnr(w))
-            self.assertTrue(keyboardwalk.walk_smpl_nlnr(w, dbg=True))
+            self.assertTrue(keyboardwalk.walk_smpl_nlnr(w))
 
         for w in not_simple_nonlinear_walks:
             self.assertFalse(keyboardwalk.walk_lnr(w))
