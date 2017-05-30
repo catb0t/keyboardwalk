@@ -288,9 +288,13 @@ def walk_lnr(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
 
 
 def walk(wlk, kbd=Keyboards.QWERTY):
-    return ("Walk the bases!"                 if   walk_lnr(wlk)
-            else "Steal the pitcher's mound!" if walk_smpl_nlnr(wlk)
-            else "Strike, not a walk!")
+    return ("Linear: walk the bases in order"
+                if walk_lnr(wlk, kbd=kbd) else
+            "Simple nonlinear: steal second, then home"
+                if walk_smpl_nlnr(wlk, kbd=kbd) else
+            "Complex nonlinear: walk home from another dimension"
+                if walk_cplx_nlnr(wlk, kbd=kbd) else
+            "No walk: you struck out!")
 
 
 def gen_rand_walk(wlk_len, kbd=Keyboards.QWERTY):
