@@ -1,6 +1,25 @@
 #!/usr/bin/env python3
 
-import pprint
+
+class Keyboards():
+    QWERTY = (
+        "qwertyuiop",
+        "asdfghjkl",
+        " zxcvbnm"
+    )
+
+    ABC = (
+        "abcdefghi",
+        "jklmnopqr",
+        "stuvwxyz"
+    )
+
+    FULLQWERTY = (
+        "`1234567890-=",
+        "qwertyuiop[]\\",
+        "asdfghjkl;'",
+        " zxcvbnm,./"
+    )
 
 
 class Matrix_2D:
@@ -17,13 +36,9 @@ class Matrix_2D:
 
     def __getitem__(self, key):
         '''if the key is found, return its index, else try to index'''
-        for idx, elt in enumerate(self.mat):
-            try:
-                x = elt.index(key)
-            except ValueError:
-                pass
-            else:
-                return Twople([x, idx])
+        idx = self.index(key)
+        if idx is not None:
+            return idx
 
         if isinstance(key, int):
             return self.mat[self.y][self.x]
@@ -78,6 +93,22 @@ class Matrix_2D:
     def __neg__(self):
         return ~self
 
+    def __matmul__(self, rhs):
+        return self.index(rhs)
+
+    def repad(self, padwith=None):
+        self.mat = mat_rpad(self.mat)
+
+    def index(self, key):
+        for idx, elt in enumerate(self.mat):
+            try:
+                x = elt.index(key)
+            except ValueError:
+                pass
+            else:
+                return Twople(x, idx)
+        return None
+
     def x_chg(self, n):
         self.x = self._chgx(n)
         return self.x
@@ -98,44 +129,114 @@ class Matrix_2D:
         if v > len(self.mat) - 1: return len(self.mat) - 1
         return v
 
-    def repad(self, padwith=None):
-        self.mat = mat_rpad(self.mat)
-
     def __repr__(self):
+        from pprint import pformat
         return "{} {} {}\n{}".format(
             self.x, self.y, self[0],
-            pprint.pformat(self.mat, indent=4, width=50)
+            pformat(self.mat, indent=4, width=50)
         )
 
 
 class Twople(tuple):
+
+    def __new__(cls, *args):
+        return super().__new__(cls, args)
+
+    def __add__(self, rhs):
+        return Twople(tuple(self) + (rhs, ))
+
     def __sub__(self, rhs):
-        return Twople( (self[0] - rhs[0], self[1] - rhs[1]) )
+        return Twople( self[0] - rhs[0], self[1] - rhs[1] )
 
     def __or__(self, rhs):
+        if isinstance(rhs, Twople):
+            return self[0] | self[1] | rhs[0] | rhs[1]
         return self[0] | self[1] | rhs
 
     def __abs__(self):
-        return Twople(map(abs, self))
+        return Twople( abs(self[0]), abs(self[1]), *self[2:] )
 
     def sort(self):
-        return Twople(sorted(self))
+        return Twople( *sorted(self[:2]), *self[2:] )
+
+    def __repr__(self):
+        return "Twople" + super().__repr__()
 
 
-def walk_rec(kbd, wlk, dbg=False):
+def str_except(seq, c):
+    return "".join(filter(lambda x: x != c, seq))
+
+
+def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
+    mat = Matrix_2D(kbd)
+
+    cordict = { c: mat @ c for c in wlk }
+    if None in cordict.values(): return False
+
+    reldict = {
+        c: {
+            c2: abs(cordict[c2] - cordict[c]) for c2 in str_except(wlk, c)
+        }
+        for c in wlk
+    }
+    comp_relation = (
+        1 in
+        (
+            reldict[c][c2] | 1
+            for c2 in reldict[c]
+        )
+        for c in reldict
+    )
+    return all( comp_relation )
+
+
+def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
     '''
-        Use recursion to determine whether a string is a walk of a keyboard.
+        Use an iterative, non-recursive method to determine whehter a string is
+            a simple non-linear walk of a keyboard.
+    '''
+    from functools import reduce
+
+    if len(wlk) < 2: return True
+
+    mat = Matrix_2D(kbd)
+    coords = []
+    for c in wlk:
+        idx = mat @ c
+        if idx is None: return False
+        coords.append(idx + c)
+
+    oldcoords  = coords.copy()
+    sortcoords = (tuple(sorted(coords, key=lambda x: (x[0], x[1]))),
+                  tuple(sorted(coords, key=lambda x: (x[1], x[0]) )),
+                  tuple(coords))
+    accums  = [ list() ] * len(sortcoords)
+    for idx, elt in enumerate(sortcoords):
+        for jdx, flt in enumerate(elt):
+            nxt = flt if (jdx + 1 >= len(elt)) else elt[jdx + 1]
+            accums[idx].append( abs( flt - nxt ) )
+            if dbg: print("flt, nxt:", flt, nxt)
+    from pprint import pprint
+    if dbg: [pprint(i) for i in (oldcoords, sortcoords, accums)]
+
+    return 1 in (reduce(lambda x, y: (x | 1) | (y | 1), acc) for acc in accums)
+
+
+def walk_lnr(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
+    '''
+        Use recursion to determine whether a string is a linear walk of a
+            keyboard.
     '''
     lw = len(wlk)
     if lw < 2: return True
-    if lw % 2:
-        if not walk_rec(kbd, wlk[-2:], dbg=dbg):
+    if sc and lw % 2:
+        if not walk_lnr(wlk[-2:], kbd=kbd, dbg=dbg, sc=sc):
             return False
 
     kbd_mat = Matrix_2D(kbd)
     first, second = wlk[:2]
     try:
-        fi, si = kbd_mat[first], kbd_mat[second]
+        fi, si = kbd_mat @ first, kbd_mat @ second
     except IndexError:
         return False
     diff   = abs(fi - si).sort()
@@ -143,18 +244,21 @@ def walk_rec(kbd, wlk, dbg=False):
 
     if dbg: print(first, fi, second, si, diff, valid)
 
-    if valid: return walk_rec(kbd, wlk[2:], dbg=dbg)
+    if valid: return walk_lnr(wlk[1:], kbd=kbd, dbg=dbg, sc=sc)
 
     return False
 
 
-def walk(kbd, wlk):
-    return walk_rec(kbd, wlk, dbg=False)
+def walk(wlk, kbd=Keyboards.QWERTY):
+    return ("Walk the bases!"                 if   walk_lnr(wlk)
+            else "Steal the pitcher's mound!" if walk_smpl_nlnr(wlk)
+            else "Strike, not a walk!")
 
 
-def gen_rand_walk(kbd, wlk_len):
-    from random import randrange, seed, choice
-    from time import time
+def gen_rand_walk(wlk_len, kbd=Keyboards.QWERTY):
+    from random     import randrange, seed, choice
+    from time       import time
+    from itertools  import permutations
 
     seed(time() * 100)
     wlk     = []
@@ -163,7 +267,6 @@ def gen_rand_walk(kbd, wlk_len):
         startx, starty  = randrange(~kbd_mat), randrange(+kbd_mat)
         kbd_mat        /= (startx, starty)
 
-    from itertools import permutations
     dirs = tuple(permutations((0, 1, -1), 2))
 
     for c in range(wlk_len + 1):
@@ -191,20 +294,17 @@ def mat_rpad(mat, padwith=None):
 
 
 def main():
-    kbd = ["qwertyu", "asdfghj", " zxcvbn"]  #
-    # input("kbd: ").split(" ")
-    wlk = input("walk: ")  # "wsdcvb"
-    print(walk(kbd, wlk))
+    from pprint import pprint
+    print(walk_smpl_nlnr(input("str: "), dbg=True))
     return
-
-    kbd_mat = Matrix_2D(kbd)
-    pprint.pprint(kbd_mat)
+    kbd_mat = Matrix_2D(Keyboards.QWERTY)
+    pprint(kbd_mat)
     kbd_mat += (2, 1)
     kbd_mat *= -1
-    pprint.pprint(kbd_mat)
+    pprint(kbd_mat)
     kbd_mat /= (1, 1)
     kbd_mat %= reversed(kbd_mat)
-    pprint.pprint(kbd_mat)
+    pprint(kbd_mat)
     print(kbd_mat["a"])
 
 

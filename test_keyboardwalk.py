@@ -4,42 +4,61 @@ import unittest
 import keyboardwalk
 
 
+linear_walks = [
+    "wsdxcv",
+    "wsdcvb",
+    "qwertyuiop",
+    "asdfgbnh",
+    "poklmn",
+    "asdfgfdsa",
+    "jkli",
+    "plkio",
+    "plm",
+    "l",
+    "llllllllllp"
+]
+not_linear_walks = [
+    "jklu",
+    "asdfguipooi",
+    "plu"
+]
+
+simple_nonlinear_walks = [
+    "qasdfw",
+    "wsdxcve",
+    "poiul",
+    "asdfghjklq",
+    "fgds",
+    "asdqwzxc"
+]
+not_simple_nonlinear_walks = [
+    "asdqwezxc",
+    "asdfhjkl",
+    "plqa",
+    "oweiru",
+    "nmfgtr",
+]
+
+KB = keyboardwalk.Keyboards.QWERTY
+
+
 class TestKBW(unittest.TestCase):
-    def test_walks(self):
-        walks = [
-            "wsdxcv",
-            "wsdcvb",
-            "qwertyuiop",
-            "asdfgbnh",
-            "poklmn",
-            "asdfgfdsa",
-            "jkli",
-            "plkio",
-            "plm",
-            "l",
-            "llllllllllp"
-        ]
-        notwalks = [
-            "jklu",
-            "asdfguipooi",
-            "plu"
-        ]
-        kb = [
-            "qwertyuiop",
-            "asdfghjkl ",
-            " zxcvbnm  "
-        ]
-        '''
-        for w in walks:
-            print("`" + w + "`")
-        for w in notwalks:
-            print("`" + w + "`")'''
+    def test_linear_walks(self):
+        for w in linear_walks:
+            self.assertTrue(keyboardwalk.walk_lnr(w))
 
-        for w in walks:
-            self.assertTrue(keyboardwalk.walk_rec(kb, w))
+        for w in not_linear_walks:
+            self.assertFalse(keyboardwalk.walk_lnr(w))
 
-        for w in notwalks:
-            self.assertFalse(keyboardwalk.walk_rec(kb, w))
+    def test_nonlinear_walks(self):
+        for w in simple_nonlinear_walks:
+            print("doing", w)
+            self.assertFalse(keyboardwalk.walk_lnr(w))
+            self.assertTrue(keyboardwalk.walk_smpl_nlnr(w, dbg=True))
+
+        for w in not_simple_nonlinear_walks:
+            self.assertFalse(keyboardwalk.walk_lnr(w))
+            self.assertFalse(keyboardwalk.walk_smpl_nlnr(w))
 
     def test_mat_rpad(self):
         ms = [
@@ -61,15 +80,10 @@ class TestKBW(unittest.TestCase):
             self.assertEqual(res, cmp)
 
     def test_gen_rand_walk(self):
-        kb = [
-            "qwertyuiop",
-            "asdfghjkl ",
-            " zxcvbnm  "
-        ]
         self.assertTrue(
             map(
-                lambda w: keyboardwalk.walk(kb, w),
-                (keyboardwalk.gen_rand_walk(kb, 50) for i in range(50))
+                lambda w: keyboardwalk.walk(w),
+                (keyboardwalk.gen_rand_walk(50) for i in range(50))
             )
         )
 
