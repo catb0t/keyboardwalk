@@ -229,6 +229,14 @@ def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
     return all( comp_relation )
 
 
+def walk_cplx_nlnr_matchpattern():
+    '''
+        Attempt to literally use pattern matching to determine if a string is a
+            complex walk on a keyboard.
+    '''
+    pass
+
+
 def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
     '''
         Use an iterative, non-recursive method to determine whehter a string is
@@ -260,15 +268,15 @@ def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
     return 1 in (reduce(lambda x, y: (x | 1) | (y | 1), acc) for acc in accums)
 
 
-def walk_lnr(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
+def walk_lnr(wlk, kbd=Keyboards.QWERTY, dbg=False, quick_scan=True):
     '''
         Use recursion to determine whether a string is a linear walk of a
             keyboard.
     '''
     lw = len(wlk)
     if lw < 2: return True
-    if sc and lw % 2:
-        if not walk_lnr(wlk[-2:], kbd=kbd, dbg=dbg, sc=sc):
+    if quick_scan and lw % 2:
+        if not walk_lnr(wlk[-2:], kbd=kbd, dbg=dbg, quick_scan=quick_scan):
             return False
 
     kbd_mat = Matrix_2D(kbd)
@@ -282,9 +290,17 @@ def walk_lnr(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
 
     if dbg: print(first, fi, second, si, diff, valid)
 
-    if valid: return walk_lnr(wlk[1:], kbd=kbd, dbg=dbg, sc=sc)
+    if valid: return walk_lnr(wlk[1:], kbd=kbd, dbg=dbg, quick_scan=quick_scan)
 
     return False
+
+
+def walk_lnr_lookabout(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
+    '''
+        Use an iterative, linear method with 1 element lookahead-lookaround
+            to determine whether a string is a linear walk of a matrix.
+    '''
+    pass
 
 
 def walk(wlk, kbd=Keyboards.QWERTY):
