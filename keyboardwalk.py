@@ -226,6 +226,11 @@ def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
         )
         for c in reldict
     )
+    from pprint import pprint
+    if dbg: [pprint(i) for i in
+                (cordict, reldict,
+                    [ [reldict[c][c2] | 1 for c2 in reldict[c]]
+                            for c in reldict])]
     return all( comp_relation )
 
 
@@ -248,20 +253,27 @@ def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
 
     mat = Matrix_2D(kbd)
     coords = []
+
     for c in wlk:
         idx = mat @ c
         if idx is None: return False
         coords.append(idx + c)
+
     oldcoords  = coords.copy()
     sortcoords = (tuple(sorted(coords, key=lambda x: (x[0], x[1]) )),
                   tuple(sorted(coords, key=lambda x: (x[1], x[0]) )),
                   tuple(coords))
+
     accums  = [ [] for i in range(len(sortcoords)) ]
+
     for idx, elt in enumerate(sortcoords):
         for jdx, flt in enumerate(elt):
+
             nxt = flt if (jdx + 1 >= len(elt)) else elt[jdx + 1]
             accums[idx].append( abs( flt - nxt ) )
+
             if dbg: print("flt, nxt:", flt, nxt)
+
     from pprint import pprint
     if dbg: [pprint(i) for i in (oldcoords, sortcoords, accums)]
 
@@ -353,7 +365,12 @@ def mat_rpad(mat, padwith=None):
 
 def main():
     from pprint import pprint
-    print(walk_smpl_nlnr(input("str: "), dbg=True))
+    s = input("str: ")
+    print(walk_lnr(s, dbg=True))
+    print()
+    print(walk_smpl_nlnr(s, dbg=True))
+    print()
+    print(walk_cplx_nlnr(s, dbg=True))
     return
     kbd_mat = Matrix_2D(Keyboards.QWERTY)
     pprint(kbd_mat)
