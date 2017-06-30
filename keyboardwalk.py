@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-class Keyboards():
+class Keyboards:
     QWERTY = (
         "qwertyuiop",
         "asdfghjkl",
@@ -366,11 +366,13 @@ def mat_rpad(mat, padwith=None):
 def main():
     from pprint import pprint
     s = input("str: ")
-    print(walk_lnr(s, dbg=True))
-    print()
-    print(walk_smpl_nlnr(s, dbg=True))
-    print()
-    print(walk_cplx_nlnr(s, dbg=True))
+    print(walk(s))
+    '''    print(walk_lnr(s, dbg=True))
+        print()
+        print(walk_smpl_nlnr(s, dbg=True))
+        print()
+        print(walk_cplx_nlnr(s, dbg=True))
+    '''    
     return
     kbd_mat = Matrix_2D(Keyboards.QWERTY)
     pprint(kbd_mat)
