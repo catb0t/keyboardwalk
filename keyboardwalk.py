@@ -83,6 +83,8 @@ class Matrix_2D:
             return self.mat[self.y][self.x]
         if isinstance(key, slice):
             return self.mat[key.stop][key.start]
+        if isinstance(key, Twople):
+            return self.mat[ key[1] ][ key[0] ]
 
         raise IndexError("failed to getitem with key {} of type {}"
                          .format(key, type(key)))
@@ -133,7 +135,7 @@ class Matrix_2D:
         return ~self
 
     def __matmul__(self, rhs):
-        return self.index(rhs)
+        return ~self.index(rhs)
 
     def repad(self, padwith=None):
         self.mat = mat_rpad(self.mat)
@@ -182,10 +184,19 @@ class Twople(tuple):
         return super().__new__(cls, args)
 
     def __add__(self, rhs):
+        if isinstance(rhs, Twople):
+            return Twople(
+                self[0] + rhs[0],
+                self[1] + rhs[1],
+                *self[2:], *rhs[2:]
+              )
         return Twople(*self, rhs)
 
     def __sub__(self, rhs):
         return Twople( self[0] - rhs[0], self[1] - rhs[1] )
+
+    def __invert__(self):
+        return self.transpose2()
 
     def __or__(self, rhs):
         if isinstance(rhs, Twople):
@@ -195,11 +206,22 @@ class Twople(tuple):
     def __abs__(self):
         return Twople( abs(self[0]), abs(self[1]), *self[2:] )
 
+    def __eq__(self, rhs):
+        if isinstance(rhs, Twople):
+            return self[0] == rhs[0] and self[1] == rhs[1]
+        return False
+
     def sort(self):
         return Twople( *sorted(self[:2]), *self[2:] )
 
+    def transpose2(self):
+        return Twople(self[1], self[0], *self[2:] )
+
     def __repr__(self):
         return "Twople" + super().__repr__()
+
+    def __hash__(self):
+        return hash(self[0]) + hash(self[1])
 
 
 def str_except(seq, c):
@@ -372,7 +394,7 @@ def main():
         print(walk_smpl_nlnr(s, dbg=True))
         print()
         print(walk_cplx_nlnr(s, dbg=True))
-    '''    
+    '''
     return
     kbd_mat = Matrix_2D(Keyboards.QWERTY)
     pprint(kbd_mat)

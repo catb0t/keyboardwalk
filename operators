@@ -1,0 +1,25 @@
+class Matrix_2D
+  M[i]            M.mat[M.y][M.x]
+  M[i:j]          M.mat[j][i]
+  M[Twople(i, j)] M.mat[j][i]
+
+  M += i      M.x = i
+  M += (i, j) M.y, M.x = j, i
+
+  M *= i      M.y = i
+  M *= (i, j) M.y, M.x = j, i
+
+  M /= (i, j) M.y, M.x = j, i
+  M %= N      M.mat = N.mat
+
+  +M          len(M.mat)    # max for y
+  ~M          len(M.mat[0]) # max for x
+  -M          ~M
+  M @ "q"       M.indexof("q")
+
+class Twople
+  T + U       T[0] + U[0]...
+  T - U       T[0] - U[0]...
+  T | U       T[0] | U[0]...
+  abs(T)      abs(T[0])...
+  T.sort()    sorted(T)
