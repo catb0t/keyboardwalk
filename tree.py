@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import keyboardwalk
 import itertools
-from pprint import pprint
+# from pprint import pprint
 kb = keyboardwalk.Matrix_2D(
-  ["qwe", "asd", "zxc"]
+  ["qw", "as"]
 )
 
 print(kb)
@@ -19,8 +19,9 @@ def make_tree_level(l, keyboard):
         for n in range(+keyboard):
             surr_chars = []
             for c in combs:
-                add = keyboardwalk.Twople(m, n) + c
-                if abs(add) == add and (c != keyboardwalk.Twople(0, 0)):
+                mn = keyboardwalk.Twople(m, n)
+                add = mn + c
+                if mn != add and (abs(add) == add):
                     surr_chars.append(c)
 
             l[ keyboard[m:n] ] = {keyboard[x]: dict() for x in surr_chars}

@@ -229,6 +229,10 @@ def str_except(seq, c):
 
 
 def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
+    '''
+        Use an iterative lookup-based algorithm to determine whether a string
+            is a walk of a keyboard.
+    '''
     mat = Matrix_2D(kbd)
 
     cordict = { c: mat @ c for c in wlk }
@@ -256,12 +260,22 @@ def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
     return all( comp_relation )
 
 
-def walk_cplx_nlnr_matchpattern():
+def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
     '''
-        Attempt to literally use pattern matching to determine if a string is a
-            complex walk on a keyboard.
+        Use graph theory to determine whether a path (string) is a complex non-
+            linear walk of a graph.
     '''
-    pass
+    import graph
+    adjs = graph.matrix_to_adjlist(Matrix_2D(kbd))
+    memory = ()
+    for idx, elt in enumerate(path):
+        if not graph.edge_exists_between(elt, path[idx + 1], adjs):
+            if not any(
+              (graph.edge_exists_between(elt, m, adjs) for m in memory)
+            ):
+                return False
+        memory += elt
+    return True
 
 
 def walk_smpl_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
