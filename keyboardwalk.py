@@ -211,8 +211,27 @@ class Twople(tuple):
             return self[0] == rhs[0] and self[1] == rhs[1]
         return False
 
+    def cmp(self, rhs):
+        if isinstance(rhs, Twople):
+            if self == rhs:
+                return 0
+            if self[0] < rhs[0] and self[1] < rhs[1]:
+                return -2
+            if self[0] < rhs[0] or self[1] < rhs[1]:
+                return -1
+            if self[0] > rhs[0] and self[1] > rhs[1]:
+                return 2
+            if self[0] > rhs[0] or self[1] > rhs[1]:
+                return 1
+            if self[0] == rhs[0] and self[1] == rhs[1]:
+                return 0
+        return None
+
     def sort(self):
         return Twople( *sorted(self[:2]), *self[2:] )
+
+    def sum(self):
+        return self[0] + self[1]
 
     def transpose2(self):
         return Twople(self[1], self[0], *self[2:] )
@@ -224,8 +243,60 @@ class Twople(tuple):
         return hash(self[0]) + hash(self[1])
 
 
+def cmp(*x):
+    if len(x) == 2:
+        return x[0].cmp(x[1])
+    return sorted( (e.cmp() for e in x) )
+
+
 def str_except(seq, c):
     return "".join(filter(lambda x: x != c, seq))
+
+
+def matrix_to_edgelist(mat, dbg=False):
+    import itertools
+    edges = set()
+    diffs = set(map(
+        lambda x: Twople(*x),
+        itertools.permutations([-1, -1, 0, 1, 1], 2)
+    ))
+
+    for i in range(+mat):
+        for j in range(-mat):
+            for d in diffs:
+                mn = Twople(i, j)
+                add = mn + d
+                if all([
+                    -2 == cmp(mn, Twople(+mat - 1, -mat - 1)),
+                    mn != add,
+                    (abs(add) == add)
+                ]):
+                    x = list( sorted( (mn, add) ) )
+                    x[0] = mat[ x[0] ]
+                    # if dbg: print("dbg:", x[1], i, j)
+                    x[1] = mat[ x[1] ]
+                    edges.add(Twople(*x))
+    return edges
+
+
+def matrix_to_adjlist(mat):
+    adjs = dict()
+    edges = matrix_to_edgelist(mat)
+    for e in edges:
+        if e[0] in adjs:
+            adjs[ e[0] ].add(e[1])
+            # if e[0] != e[1]:
+        else:
+            adjs[ e[0] ] = set(e[1])
+    return adjs
+
+
+def edge_exists_between(a, b, gph):
+    if a in gph:
+        return b in gph[a]
+    if b in gph:
+        return a in gph[b]
+    return False
 
 
 def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
@@ -265,13 +336,12 @@ def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
         Use graph theory to determine whether a path (string) is a complex non-
             linear walk of a graph.
     '''
-    import graph
-    adjs = graph.matrix_to_adjlist(Matrix_2D(kbd))
+    adjs = matrix_to_adjlist(Matrix_2D(kbd))
     memory = ()
     for idx, elt in enumerate(path):
-        if not graph.edge_exists_between(elt, path[idx + 1], adjs):
+        if not edge_exists_between(elt, path[idx + 1], adjs):
             if not any(
-              (graph.edge_exists_between(elt, m, adjs) for m in memory)
+              (edge_exists_between(elt, m, adjs) for m in memory)
             ):
                 return False
         memory += elt
