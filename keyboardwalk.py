@@ -283,6 +283,7 @@ def matrix_to_edgelist(mat, dbg=False):
 def matrix_to_adjlist(mat):
     adjs = dict()
     edges = matrix_to_edgelist(mat)
+    print(edges)
     for e in edges:
         if e[0] in adjs:
             adjs[ e[0] ].add(e[1])
@@ -338,11 +339,12 @@ def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
             linear walk of a graph.
     '''
     adjs = matrix_to_adjlist(Matrix_2D(kbd))
-    memory = ()
+    memory = set()
     for idx, elt in enumerate(path):
         mem_edge = any( (edge_exists_between(elt, m, adjs) for m in memory) )
         if idx + 1 >= len(path): return mem_edge
-        return edge_exists_between(elt, path[idx + 1], adjs) or mem_edge
+        if not edge_exists_between(elt, path[idx + 1], adjs) and not mem_edge:
+            return False
         memory.add(elt)
     return True
 
@@ -426,7 +428,7 @@ def walk(wlk, kbd=Keyboards.QWERTY):
             "Simple nonlinear: steal second, then home"
                 if walk_smpl_nlnr(wlk, kbd=kbd) else
             "Complex nonlinear: walk home from another dimension"
-                if walk_cplx_nlnr(wlk, kbd=kbd) else
+                if walk_cplx_nlnr_graph(wlk, kbd=kbd) else
             "No walk: you struck out!")
 
 
