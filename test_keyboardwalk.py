@@ -41,6 +41,9 @@ not_simple_nonlinear_walks = [
 
 cplx_walks = [
     "qweasdzxc",
+    "asdqwezxc",
+    "qzwxecasd",
+    "rtydfgxcv",
     "qwasdxc",
     "qasdecz",
     "uiopl",
@@ -48,7 +51,8 @@ cplx_walks = [
 
 not_cplx_walks = [
     "adg",
-    "qdz"
+    "qdz",
+    "qwet"
 ]
 
 KB = keyboardwalk.Keyboards.QWERTY
@@ -88,10 +92,12 @@ class TestKBW(unittest.TestCase):
         for w in cplx_walks:
             print("doing", w)
             self.assertTrue(keyboardwalk.walk_cplx_nlnr(w))
+            self.assertTrue(keyboardwalk.walk_cplx_nlnr_graph(w))
 
         for w in not_cplx_walks:
             print("doing", w)
             self.assertFalse(keyboardwalk.walk_cplx_nlnr(w))
+            self.assertFalse(keyboardwalk.walk_cplx_nlnr_graph(w))
 
     def test_mat_rpad(self):
         ms = [

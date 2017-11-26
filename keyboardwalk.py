@@ -84,7 +84,7 @@ class Matrix_2D:
         if isinstance(key, slice):
             return self.mat[key.stop][key.start]
         if isinstance(key, Twople):
-            return self.mat[ key[1] ][ key[0] ]
+            return self.mat[ key[0] ][ key[1] ]
 
         raise IndexError("failed to getitem with key {} of type {}"
                          .format(key, type(key)))
@@ -267,7 +267,7 @@ def matrix_to_edgelist(mat, dbg=False):
                 mn = Twople(i, j)
                 add = mn + d
                 if all([
-                    -2 == cmp(add, Twople(-mat - 1, +mat - 1)),
+                    -2 == cmp(add, Twople(+mat - 1, -mat - 1)),
                     (abs(add) == add)
                 ]):
                     # if dbg: print(mn, add, Twople(-mat - 1, +mat - 1))
@@ -283,7 +283,6 @@ def matrix_to_edgelist(mat, dbg=False):
 def matrix_to_adjlist(mat):
     adjs = dict()
     edges = matrix_to_edgelist(mat)
-    print(edges)
     for e in edges:
         if e[0] in adjs:
             adjs[ e[0] ].add(e[1])
@@ -294,11 +293,33 @@ def matrix_to_adjlist(mat):
 
 
 def edge_exists_between(a, b, gph):
-    if a in gph:
-        return b in gph[a]
-    if b in gph:
-        return a in gph[b]
+    if a == b: return True
+    if a in gph and b in gph[a]: return True
+    if b in gph and a in gph[b]: return True
     return False
+
+
+def has_path_to(a, b, gph):
+    if edge_exists_between(a, b, gph): return True
+    if not any( ((a in e or b in e) for e in gph.values()) ): return False
+    a_ns = adj_neighbours(a, gph)
+    b_ns = adj_neighbours(b, gph)
+    for an in a_ns:
+        for bn in b_ns:
+            if has_path_to(an, bn, gph):
+                return True
+    return False
+
+
+def adj_neighbours(x, gph):
+    ns = set()
+    for e in gph.keys():
+        if x == e:
+            for i in gph[e]:
+                ns.add(i)
+        elif x in gph[e]:
+            ns.add(e)
+    return ns
 
 
 def walk_cplx_nlnr(wlk, kbd=Keyboards.QWERTY, dbg=False):
@@ -338,10 +359,12 @@ def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
         Use graph theory to determine whether a path (string) is a complex non-
             linear walk of a graph.
     '''
+    import pprint
     adjs = matrix_to_adjlist(Matrix_2D(kbd))
+    pprint.pprint(adjs)
     memory = set()
     for idx, elt in enumerate(path):
-        mem_edge = any( (edge_exists_between(elt, m, adjs) for m in memory) )
+        mem_edge = any( (has_path_to(elt, m, adjs) for m in memory) )
         if idx + 1 >= len(path): return mem_edge
         if not edge_exists_between(elt, path[idx + 1], adjs) and not mem_edge:
             return False

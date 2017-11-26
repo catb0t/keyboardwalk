@@ -11,3 +11,4 @@ print(
   )
 )
 print(keyboardwalk.walk_cplx_nlnr_graph("asd"))
+print(keyboardwalk.has_path_to("a", "c", gph))
