@@ -267,14 +267,15 @@ def matrix_to_edgelist(mat, dbg=False):
                 mn = Twople(i, j)
                 add = mn + d
                 if all([
-                    -2 == cmp(mn, Twople(+mat - 1, -mat - 1)),
-                    mn != add,
+                    -2 == cmp(add, Twople(-mat - 1, +mat - 1)),
                     (abs(add) == add)
                 ]):
+                    # if dbg: print(mn, add, Twople(-mat - 1, +mat - 1))
                     x = list( sorted( (mn, add) ) )
                     x[0] = mat[ x[0] ]
-                    # if dbg: print("dbg:", x[1], i, j)
                     x[1] = mat[ x[1] ]
+                    if any( ( e in (x[0], x[1]) for e in ("", " ") ) ):
+                        continue
                     edges.add(Twople(*x))
     return edges
 
@@ -339,12 +340,10 @@ def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
     adjs = matrix_to_adjlist(Matrix_2D(kbd))
     memory = ()
     for idx, elt in enumerate(path):
-        if not edge_exists_between(elt, path[idx + 1], adjs):
-            if not any(
-              (edge_exists_between(elt, m, adjs) for m in memory)
-            ):
-                return False
-        memory += elt
+        mem_edge = any( (edge_exists_between(elt, m, adjs) for m in memory) )
+        if idx + 1 >= len(path): return mem_edge
+        return edge_exists_between(elt, path[idx + 1], adjs) or mem_edge
+        memory.add(elt)
     return True
 
 

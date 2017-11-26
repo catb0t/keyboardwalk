@@ -54,6 +54,18 @@ not_cplx_walks = [
 KB = keyboardwalk.Keyboards.QWERTY
 
 
+class TestMatrix_2D(unittest.TestCase):
+    pass
+
+
+class TestTwople(unittest.TestCase):
+    pass
+
+
+class TestGraphTheory(unittest.TestCase):
+    pass
+
+
 class TestKBW(unittest.TestCase):
     def test_linear_walks(self):
         for w in linear_walks:
