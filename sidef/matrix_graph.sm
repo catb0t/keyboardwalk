@@ -1,0 +1,250 @@
+class Array { method hash_from_keys () -> Hash { self.to_set.hash_from_keys } }# [self].zip_by{ |l, r| (l, r) }.to_h } }
+class Set {
+  method hash_from_keys () -> Hash { const h = :(); h{self...} = nil; h }
+}
+class Matrix {
+  method locate (v) -> (Bool, Vector) {
+    var col = nil
+    const row = self.rows.index{
+      with ( .index(v) ) {
+        if (. != -1) { col = _ }
+        . != -1
+      }
+    }
+    # assert_ne( row, -1 )
+    # assert( defined(col) )
+    (row != -1 && defined(col), Vector(row, col))
+  }
+
+  method at (Vector c) { self[ c[0] ][ c[1] ] }
+  method dimensions () -> Vector { Vector(self.rows.len, self.last.len) }
+  method last_indices () -> Vector { Vector(self.rows.last_index, self.last.last_index) }
+  method corners () -> Array { const _ = self.dimensions; [Vec(1 1), Vec(1, .[1]), Vec(.[0], 1), _] }
+  method deep_is_empty -> Bool { self.flatten.is_empty }
+}
+Matrix.alias_method(:dimensions, :dim)
+
+class Vector {
+  method ewise_ne (Vec other) {
+    [self, other].zip_by{ |s, o| s != o }.all
+  }
+}
+
+<<EOT
+    1  c1       2
+     Q W E R T Y
+  c4 A S D F G H c2
+     * Z X C V B
+    4  c3       3
+
+  corner 1: can\'t add -1 to row or col
+  corner 2: can\'t add -1 to row        can\'t add 1 to col
+
+  corner 3: can\'t add 1 to row or col
+  corner 4: can\'t add 1 to row         can\'t add -1 to col
+
+  cliff 1: can\'t add -1 to row
+  cliff 2: can\'t add 1  to col
+  cliff 3: can\'t add 1  to row
+  cliff 4: can\'t add -1 to col
+EOT
+
+define Hash KBD_MAT = Matrix(%w<q w e r t y>, %w<a s d f g h>, %w<* z x c v b>)
+define Hash KBD_GPH = :(
+  q => %w<w a s>.to_set,
+  w => %w<q a s e d>.to_set,
+  e => %w<w r s d f>.to_set,
+  r => %w<e d f t g>.to_set,
+  t => %w<r f g h y>.to_set,
+  y => %w<t g h>.to_set,
+
+  a => %w<q w s z>.to_set,
+  s => %w<q w e d x z a>.to_set,
+  d => %w<w e r f c x z s>.to_set,
+  f => %w<e r d x c t g v>.to_set,
+  g => %w<r t y h b v f c>.to_set,
+  h => %w<t y g v b>.to_set,
+
+  z => %w<a s d x>.to_set,
+  x => %w<s d f z c>.to_set,
+  c => %w<x d f g v>.to_set,
+  v => %w<f g h b c>.to_set,
+  b => %w<g h v>.to_set
+)
+
+define Set NEIGHBOUR_COORDS = [0, 0, 1, 1, -1, -1].permutations.to_set.map{ .combinations(2).map{ .to_vector }... }
+define Set NEIGHBOUR_COORDS_NO_BASE = NEIGHBOUR_COORDS-Set(Vec(0 0))
+define String EMPTY_PADDING_CHAR = '*' # '
+# func exclude_cliffs (Vector node, Matrix m) -> Block {
+#   const (
+#     Vec   node_dim   = node+1
+#     Vec  origin_diff = (node_dim - m.dimensions)
+#     Bool is_cliff    = (base_node.contains(0) || origin_diff.contains(0))
+#     Num    corner    = m.corners.index(base_node_dim)+1
+#   )
+#
+#   if (corner) {
+#     given (corner) {
+#       when (1) { func (Set _) -> Set { .grep{ .all{ . != -1 } } } }
+#       when (2) { func (Set _) -> Set { .grep{ .ewise_ne(Vec(-1, 1) ) } } }
+#       when (3) { func (Set _) -> Set { .grep{ .all{ . != 1 } } } }
+#       when (4) { func (Set _) -> Set { .grep{ .ewise_ne(Vec(1, -1) ) } } }
+#       default { die 'invalid corner id: '+_ }
+#     }
+#   } elsif (base_is_cliff) {
+#
+#   } else { () }
+# }
+
+func assoc_unique (Array a) -> Array {
+  if (a) {
+    const cmp = a[0]
+    const count_same = a.count{ .[0] == cmp[0] }
+    # say "found #{count_same} like #{cmp}"
+    [ count_same == 1 ? cmp : (), assoc_unique( a.slice(1) )... ]
+  } else { [] }
+}
+
+func hash_reduce_sets (Hash _) -> Set {
+  .values.reduce('|') \\ Set()
+}
+
+func to_graph (Matrix m) -> Hash {
+  m.flatten.hash_from_keys - EMPTY_PADDING_CHAR -> map_kv{ # '
+      |k|
+    ((k) =>
+      NEIGHBOUR_COORDS_NO_BASE.map{
+        m.at( . + { |_, c| c }( m.locate(k) ) -> map{ .abs } )
+      } - Set(EMPTY_PADDING_CHAR, nil)
+    )
+  }
+}
+
+func most_neighbours (Hash _) {
+  .max_by{ |_k, _| .len }
+}
+
+func to_matrix (Hash g, Hash g_cut = g, Matrix building = Matrix()) -> Matrix {
+  const Pair   mn_first = most_neighbours(g_cut)
+  var (second, third, rest) = { |first, rest| (first, rest.first_rest) }(mn_first[1].first_rest)
+  rest
+  const Set    second_neighbours = g{second}
+  const Set    third_neighbours  = g{third}
+  say "mn_first: #{mn_first}\n\t2nd: #{second}\n\t3rd: #{third}"
+  const shared = (mn_first & second_neighbours & third_neighbours)
+  say "\tshared: #{shared}"
+  const Hash rest = (g_cut - mn_first[0])
+  if (! building) {
+    const Vec st1 = Vec(10, 10)
+    const Vec st2 = st1+Vec(1, 0)
+    const Vec st3 = st1+Vec(-1, 0)
+
+    building[ st1[0] ][ st1[1] ] = mn_first[0]
+    building[ st2[0] ][ st2[1] ] = second
+    building[ st3[0] ][ st3[1] ] = third
+  } else {
+
+  }
+  # const Pair mn_rest = most_neighbours(rest)
+  with (building ) {
+    rest ? to_matrix(g, rest, _) : _
+  }
+}
+
+# func to_matrix (Hash g, Matrix building = Matrix) -> Matrix { }
+
+func max_len_multi_sets (Hash _) -> Pair {
+  const Number max = .values.map{ .len }.max
+  with ( .grep_v{ .len == max } ) {
+    .keys.to_set ¦ hash_reduce_sets( .values.to_set )
+  }
+}
+
+func edge_exists (Hash g, a, b) -> Bool {
+  a==b || (g{a} \\> (:has, b)) || (g{b} \\> (:has, a))
+}
+
+# func bfs (Hash g, Set want, Set new, Set seen) -> Set { # returns not seen
+#   with ( (g & new -> values.reduce('|').to_set) - (new | seen) ) {
+#     say "#{_}\n\tnew: #{new}\n\tseen: #{seen}"
+#     if ( . & want ) {
+#         |shared|
+#       shared
+#     } else {
+#       bfs(g, want, _, new | seen )
+#     }
+#   } else { die () }
+# }
+
+# func bfs2 (Hash g, want, new, Set seen = Set(), Array took_path = []) { # returns not yet seen
+#   const only_new = (g & new -> map_v{ |_k, _| . - (new | seen) })
+#   const most_new_i = only_new.max_by{ |_k, _| .len }[0]
+#
+#   with ( hash_reduce_sets(only_new) ) {
+#     var (most_new, took_path_add) = if (only_new-most_new_i) {
+#       (Set(most_new_i), most_new_i)
+#     } else {
+#       (_, ()) # sidef bug: []+() is [nil]
+#     }
+#     if ( . & want ) {
+#       (took_path + took_path_add)
+#     } else {
+#       bfs2(g, want, most_new, seen: (new | seen), took_path: took_path+took_path_add )
+#     }
+#   } else { die () }
+# }
+
+# TODO: keep track of multple inputs instead of just letting them compete
+func bfs (Hash g, Set bases, Set seen) -> (Set, Set) {
+  (bases || return (Set(), seen))
+  const Hash all_new   = (g & bases).map_v{ |_k, _| . - seen }
+  const Pair best_new  = max_len_multi_sets(all_new) # all_new.max_by{ |_k, _| .len }
+  const String best_name = best_new[0] # .keys.to_set
+  const Set best_neighbours = best_new[1]
+  const Set new_seen = (seen | best_name | best_neighbours)
+  say "bases: #{bases}\n\tseen: #{seen}\n\tall_new: #{all_new}\n\tbest_name: #{best_name}"
+  (all_new - best_name) ? (best_neighbours, new_seen) : bfs(g, best_neighbours, new_seen )
+}
+
+# func shortest_path (Hash g, String end, String start, Set seen = Set()) -> (Set, Array) { }
+
+func all_connected (Hash g, Set nodes, Set seen = Set()) -> Bool {
+  (nodes || return true)
+  var (first, rest) = nodes.first_rest
+
+  # say "first: #{first}\n\trest: #{rest}\n\tseen: #{seen}"
+  const rest_neighbours = hash_reduce_sets(g & rest)
+  const seen_neighbours = hash_reduce_sets(g & seen)
+
+  const first_is_neighbour = Bool( (rest_neighbours & first) || (seen_neighbours & first) )
+  # say "\tOK? #{first_is_neighbour}"
+  first_is_neighbour && all_connected(g, rest, seen: (seen | first) )
+}
+
+func is_previsited_path (Hash g, Array path, Set seen = Set()) -> Bool {
+  (path.len==1 && return hash_reduce_sets( g & seen ).has(path[0]))
+  ( edge_exists(g, path[0], path[1]) \
+    || hash_reduce_sets( g & seen ).has( path[1] ) ) && is_previsited_path( g, path.slice(1), (seen | path[0]) )
+}
+
+func is_directed_path (Hash g, Array path) -> Bool {
+  (path[1] || return true)
+  edge_exists(g, path[0], path[1]) && is_directed_path( g, path.slice(1) )
+}
+
+# say to_matrix(KBD_GPH)
+# {
+#     |best, _seen|
+#   say best
+# }( bfs( KBD_GPH, bfs( KBD_GPH, bfs(KBD_GPH, bfs(KBD_GPH, Set(:q, :b), Set())))) )
+# say all_connected(KBD_GPH, %w<q w z x f v>.to_set)
+# func p2 (Hash g, Array nodes) -> Array {
+#   if (nodes) {
+#     const bfs_initial = g{ nodes[0] }
+#     (bfs.contains( nodes[1] )
+#       ? [ nodes[0, 1], bfs(g, bfs_initial)... ]
+#       : [ ] )
+#
+#   } else { [] }
+# }
+# func optimize (Hash g) -> Hash { }

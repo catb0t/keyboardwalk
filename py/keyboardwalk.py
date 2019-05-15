@@ -250,7 +250,7 @@ def cmp(*x):
 
 
 def str_except(seq, c):
-    return "".join(filter(lambda x: x != c, seq))
+    return seq.replace(c, "")
 
 
 def matrix_to_edgelist(mat, dbg=False):
@@ -292,16 +292,21 @@ def matrix_to_adjlist(mat):
     return adjs
 
 
-def edge_exists_between(a, b, gph):
-    if a == b: return True
-    if a in gph and b in gph[a]: return True
-    if b in gph and a in gph[b]: return True
+def edge_exists(a, b, gph):
+    if a == b:
+        return True
+    if a in gph and b in gph[a]:
+        return True
+    if b in gph and a in gph[b]:
+        return True
     return False
 
 
 def has_path_to(a, b, gph):
-    if edge_exists_between(a, b, gph): return True
-    if not any( ((a in e or b in e) for e in gph.values()) ): return False
+    if edge_exists(a, b, gph):
+        return True
+    if not any( ((a in e or b in e) for e in gph.values()) ):
+        return False
     a_ns = adj_neighbours(a, gph)
     b_ns = adj_neighbours(b, gph)
     for an in a_ns:
@@ -309,6 +314,18 @@ def has_path_to(a, b, gph):
             if has_path_to(an, bn, gph):
                 return True
     return False
+
+def path_to(a, b, gph):
+    if edge_exists(a, b, gph):
+        return True
+    if not any( ((a in e or b in e) for e in gph.values()) ):
+        return False
+    a_ns = adj_neighbours(a, gph)
+    b_ns = adj_neighbours(b, gph)
+    path = ()
+    for an in a_ns:
+        pass
+    return path
 
 
 def adj_neighbours(x, gph):
@@ -366,7 +383,7 @@ def walk_cplx_nlnr_graph(path, kbd=Keyboards.QWERTY, dbg=False):
     for idx, elt in enumerate(path):
         mem_edge = any( (has_path_to(elt, m, adjs) for m in memory) )
         if idx + 1 >= len(path): return mem_edge
-        if not edge_exists_between(elt, path[idx + 1], adjs) and not mem_edge:
+        if not edge_exists(elt, path[idx + 1], adjs) and not mem_edge:
             return False
         memory.add(elt)
     return True
@@ -442,7 +459,7 @@ def walk_lnr_lookabout(wlk, kbd=Keyboards.QWERTY, dbg=False, sc=True):
         Use an iterative, linear method with 1 element lookahead-lookaround
             to determine whether a string is a linear walk of a matrix.
     '''
-    pass
+    # pass
 
 
 def walk(wlk, kbd=Keyboards.QWERTY):

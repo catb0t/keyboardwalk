@@ -1,0 +1,37 @@
+class Array { method second { self[1] } }
+module Keyboards {
+  define QWERTY = Matrix(%w<q w e r t y u i o p>, %w<a s d f g h j k l *>, %w<* z x c v b n m * *>)
+  define Block _mtg_rec = func (Matrix m, Hash h) -> (Matrix, Hash) {
+    m.rows[0]
+  }
+  define Block matrix_to_graph = func _mtg (Matrix m) -> Hash {
+    _mtg_rec(m, :())
+  }
+}
+
+func sequential_diff_cmp (Array vs) -> Bool {
+  say "#{__FUNC_NAME__} #{vs}"
+  (vs.len < 2
+    ? true
+    : (vs.first - vs.second -> map{ .abs } > Vec(1 1) ? false : __FUNC__(vs.slice(1)) )
+  )
+}
+
+func linear (String walk, Matrix kb = Keyboards::QWERTY) {
+  const Array coords = walk.chars.map{
+      |c|
+    var col = nil
+    const row = kb.rows.index{
+      with ( .index(c) ) {
+        if (. != -1) { col = _ }
+        . != -1
+      }
+    }
+    assert_ne( row, -1 )
+    assert( defined(col) )
+    Vector(row, col)
+  }
+  sequential_diff_cmp(coords)
+}
+
+# say linear(:asdf)
