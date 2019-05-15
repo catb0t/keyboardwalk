@@ -1,6 +1,6 @@
 include matrix_graph
-import matrix_graph::KBD_GPH
-import matrix_graph::KBD_MAT
+import matrix_graph::_KBD_GPH
+import matrix_graph::_KBD_MAT
 import matrix_graph::assoc_unique
 import matrix_graph::hash_reduce_sets
 import matrix_graph::to_graph
@@ -20,27 +20,27 @@ assert_eq(
   Set(1 2 3 4 5 6)
 )
 
-assert edge_exists(KBD_GPH, :d, :x)
-assert edge_exists(KBD_GPH, :d, :d)
-assert !edge_exists(KBD_GPH, :d, :q)
+assert edge_exists(_KBD_GPH, :d, :x)
+assert edge_exists(_KBD_GPH, :d, :d)
+assert !edge_exists(_KBD_GPH, :d, :q)
 
-assert_eq( to_graph(KBD_MAT), KBD_GPH )
+assert_eq( to_graph(_KBD_MAT), _KBD_GPH )
 
 25.times{
-  assert all_connected(KBD_GPH, %w<a d z r>.to_set)
-  assert all_connected(KBD_GPH, %w<b g h>.to_set)
-  assert all_connected(KBD_GPH, %w<a d z r b g h>.to_set)
-  assert !all_connected(KBD_GPH, %w<a d r b g h>.to_set)
-  assert !all_connected(KBD_GPH, %w<a d r b g h>.to_set)
+  assert all_connected(_KBD_GPH, %w<a d z r>.to_set)
+  assert all_connected(_KBD_GPH, %w<b g h>.to_set)
+  assert all_connected(_KBD_GPH, %w<a d z r b g h>.to_set)
+  assert !all_connected(_KBD_GPH, %w<a d r b g h>.to_set)
+  assert !all_connected(_KBD_GPH, %w<a d r b g h>.to_set)
 }
 
-assert is_previsited_path(KBD_GPH, %w<a s d f>)
-assert is_previsited_path(KBD_GPH, %w<a s d f q>)
-assert is_previsited_path(KBD_GPH, %w<a s d f q t>)
-assert !is_previsited_path(KBD_GPH, %w<a s d f q y t>)
+assert is_previsited_path(_KBD_GPH, %w<a s d f>)
+assert is_previsited_path(_KBD_GPH, %w<a s d f q>)
+assert is_previsited_path(_KBD_GPH, %w<a s d f q t>)
+assert !is_previsited_path(_KBD_GPH, %w<a s d f q y t>)
 
 
-assert is_directed_path(KBD_GPH, %w<a s d f g>)
-assert !is_directed_path(KBD_GPH, %w<a s d f g q>)
-assert !is_directed_path(KBD_GPH, %w<a s d f g q t>)
-assert !is_directed_path(KBD_GPH, %w<a s d f g q t y>)
+assert is_directed_path(_KBD_GPH, %w<a s d f g>)
+assert !is_directed_path(_KBD_GPH, %w<a s d f g q>)
+assert !is_directed_path(_KBD_GPH, %w<a s d f g q t>)
+assert !is_directed_path(_KBD_GPH, %w<a s d f g q t y>)

@@ -1,12 +1,8 @@
-class Array { method second { self[1] } }
+include matrix_graph
+
 module Keyboards {
-  define QWERTY = Matrix(%w<q w e r t y u i o p>, %w<a s d f g h j k l *>, %w<* z x c v b n m * *>)
-  define Block _mtg_rec = func (Matrix m, Hash h) -> (Matrix, Hash) {
-    m.rows[0]
-  }
-  define Block matrix_to_graph = func _mtg (Matrix m) -> Hash {
-    _mtg_rec(m, :())
-  }
+  define Matrix QWERTY = Matrix(%w<q w e r t y u i o p>, %w<a s d f g h j k l *>, %w<* z x c v b n m * *>)
+  define Matrix QWERTY_GPH = matrix_graph::to_graph(QWERTY)
 }
 
 func sequential_diff_cmp (Array vs) -> Bool {
@@ -17,21 +13,47 @@ func sequential_diff_cmp (Array vs) -> Bool {
   )
 }
 
-func linear (String walk, Matrix kb = Keyboards::QWERTY) {
-  const Array coords = walk.chars.map{
-      |c|
-    var col = nil
-    const row = kb.rows.index{
-      with ( .index(c) ) {
-        if (. != -1) { col = _ }
-        . != -1
-      }
-    }
-    assert_ne( row, -1 )
-    assert( defined(col) )
-    Vector(row, col)
-  }
-  sequential_diff_cmp(coords)
+-> is_identity (String _) -> Bool {
+  .len.is_one || (.[0] == .to_set.pop)
 }
 
-# say linear(:asdf)
+func is_linear (String walk, Hash kb = Keyboards::QWERTY_GPH) -> Bool {
+  is_identity(walk) || matrix_graph::is_directed_path(kb, walk.chars)
+}
+
+func is_nonlinear (String walk, Hash kb = Keyboards::QWERTY_GPH) -> Bool {
+  with (walk) {
+    !is_identity(_) && !is_linear(_) && matrix_graph::is_previsited_path(kb, .chars)
+  }
+}
+
+func is_complex (String walk, Hash kb = Keyboards::QWERTY_GPH) -> Bool {
+  with (walk) {
+    !is_identity(_) && !is_linear(_) && !is_nonlinear(_) && matrix_graph::all_connected(kb, .chars.to_set)
+  }
+}
+
+assert is_linear(:asdf)
+assert is_linear(:asdft)
+assert !is_linear(:asdfyt)
+assert !is_linear(:asdfq)
+assert !is_linear(:hjtr) # nonlinear
+assert !is_linear(:hjrt) # complex
+
+assert is_nonlinear(:asdfq)
+assert is_nonlinear(:hjtr) # nonlinear
+assert !is_nonlinear(:asdf)
+assert !is_nonlinear(:asdft)
+assert !is_nonlinear(:asdfyt)
+assert !is_nonlinear(:hjrt) # complex
+
+assert is_complex(:hjrt) # complex
+assert is_complex(:asdfyt)
+assert !is_complex(:asdf)
+assert !is_complex(:asdft)
+assert !is_complex(:asdfq)
+assert !is_complex(:hjtr) # nonlinear
+assert !is_complex(:asdfq)
+assert !is_complex(:hjtr) # nonlinear
+assert !is_complex(:asdf)
+assert !is_complex(:asdft)

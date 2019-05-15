@@ -1,20 +1,30 @@
-class Array { method hash_from_keys () -> Hash { self.to_set.hash_from_keys } }# [self].zip_by{ |l, r| (l, r) }.to_h } }
-class Set {
-  method hash_from_keys () -> Hash { const h = :(); h{self...} = nil; h }
-}
-class Matrix {
-  method locate (v) -> (Bool, Vector) {
-    var col = nil
-    const row = self.rows.index{
-      with ( .index(v) ) {
-        if (. != -1) { col = _ }
-        . != -1
-      }
+define Block hash_from_keys = {
+  func _hash_from_keys   (Set _) -> Hash { const h = :(); h{_...} = nil; h }
+  func _hash_from_keys (Array _) -> Hash { _hash_from_keys( .to_set ) }
+}()
+
+define Block matrix_locate = func _matrix_locate (Matrix m, v) -> (Bool, Vector) {
+  var col = nil
+  const row = m.rows.index{
+    with ( .index(v) ) {
+      if (. != -1) { col = _ }
+      . != -1
     }
-    # assert_ne( row, -1 )
-    # assert( defined(col) )
-    (row != -1 && defined(col), Vector(row, col))
   }
+  # assert_ne( row, -1 )
+  # assert( defined(col) )
+  (row != -1 && defined(col), Vector(row, col))
+}
+
+define Block matrix_at = func _matrix_at (Matrix m, Vector c) {
+  m[ c[0] ][ c[1] ]
+}
+
+class Array { method hash_from_keys () -> Hash { hash_from_keys(self) } }
+class Set { method hash_from_keys () -> Hash { hash_from_keys(self) } }
+
+class Matrix {
+  method locate (_) -> (Bool, Vector) { _matrix_locate(self, _) }
 
   method at (Vector c) { self[ c[0] ][ c[1] ] }
   method dimensions () -> Vector { Vector(self.rows.len, self.last.len) }
@@ -49,8 +59,8 @@ class Vector {
   cliff 4: can\'t add -1 to col
 EOT
 
-define Hash KBD_MAT = Matrix(%w<q w e r t y>, %w<a s d f g h>, %w<* z x c v b>)
-define Hash KBD_GPH = :(
+define Hash _KBD_MAT = Matrix(%w<q w e r t y>, %w<a s d f g h>, %w<* z x c v b>)
+define Hash _KBD_GPH = :(
   q => %w<w a s>.to_set,
   w => %w<q a s e d>.to_set,
   e => %w<w r s d f>.to_set,
@@ -96,25 +106,25 @@ define String EMPTY_PADDING_CHAR = '*' # '
 #   } else { () }
 # }
 
-func assoc_unique (Array a) -> Array {
-  if (a) {
-    const cmp = a[0]
-    const count_same = a.count{ .[0] == cmp[0] }
-    # say "found #{count_same} like #{cmp}"
-    [ count_same == 1 ? cmp : (), assoc_unique( a.slice(1) )... ]
-  } else { [] }
-}
+# func assoc_unique (Array a) -> Array {
+#   if (a) {
+#     const cmp = a[0]
+#     const count_same = a.count{ .[0] == cmp[0] }
+#     # say "found #{count_same} like #{cmp}"
+#     [ count_same == 1 ? cmp : (), assoc_unique( a.slice(1) )... ]
+#   } else { [] }
+# }
 
 func hash_reduce_sets (Hash _) -> Set {
   .values.reduce('|') \\ Set()
 }
 
-func to_graph (Matrix m) -> Hash {
-  m.flatten.hash_from_keys - EMPTY_PADDING_CHAR -> map_kv{ # '
+define to_graph = func _to_graph (Matrix m) -> Hash {
+  hash_from_keys( m.flatten ) - EMPTY_PADDING_CHAR -> map_kv{ # '
       |k|
     ((k) =>
       NEIGHBOUR_COORDS_NO_BASE.map{
-        m.at( . + { |_, c| c }( m.locate(k) ) -> map{ .abs } )
+        matrix_at(m, . + { |_, c| c }( matrix_locate(m, k) ) -> map{ .abs } )
       } - Set(EMPTY_PADDING_CHAR, nil)
     )
   }
